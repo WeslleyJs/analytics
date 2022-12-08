@@ -1,8 +1,8 @@
 <template>
     <nav>
         <ul>
-            <li @click="clk = !clk">
-                    <h4><b>{{ clk ? 'Results' : 'DashBoards' }}</b></h4>
+            <li class="ul-btn" @click="clk = !clk">
+                <h4><b>{{ clk ? 'Results' : 'DashBoards' }}</b></h4>
             </li>
         </ul>
     </nav>
@@ -27,7 +27,9 @@
                 <ul class="mx-auto card-group w800">
                     <li class="card-body myBox backgroundEffect" v-for="item in mlb.variations" :key="item.id">
                         <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
-                        <p v-if="attribute"><b>Atributos 02: {{ item.attribute_combinations[2].value_name }}</b></p>
+                        <p v-if='rootAttribute && rootAttribute.prop'><b>Atributos 02: {{
+                                item.attribute_combinations[2].value_name
+                        }}</b></p>
                         <p><b>Estoque: {{ item.available_quantity }}</b></p>
                         <p><b>Vendidos: {{ item.sold_quantity }}</b></p>
                     </li>
@@ -35,8 +37,11 @@
             </div>
         </div>
     </div>
-    <div class="transi card" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
-        <canvas id="myChart"></canvas>
+    <div class="chart01" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
+        <canvas class="chart01" id="myChart"></canvas>
+    </div>
+    <div class="chart01" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
+        <canvas class="chart01" id="myChartPizza"></canvas>
     </div>
     <div>
 
@@ -56,9 +61,34 @@ export default {
             mlb: '',
             imgPng: '',
             attribute: '',
+            rootAttribute: undefined
         }
     },
     async mounted() {
+        const datas02 = {
+            labels: [
+                'Red',
+                'Blue',
+                'Yellow'
+            ],
+            datasets: [{
+                label: 'My First Dataset',
+                data: [300, 50, 100],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ],
+                hoverOffset: 4
+            }]
+        }
+
+        const config02 = {
+            type: 'doughnut',
+            data: datas02,
+        };
+
+
         const datas = {
             labels: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho'],
             datasets: [{
@@ -98,8 +128,13 @@ export default {
             }
         }
         const ctx = document.getElementById('myChart');
-        const myChart = await new Chart(ctx, config)
-        console.log(myChart);
+        const myChart = await new Chart(ctx, config);
+        myChart
+
+        const ctx02 = document.getElementById('myCharPizza');
+        const myChart02 = new Chart(ctx02, config02);
+        myChart02;
+
     },
     methods: {
         async search() {
@@ -112,24 +147,33 @@ export default {
                 attributes.forEach(element => {
                     const imgPng = element.picture_ids;
                     this.imgPng = `http://http2.mlstatic.com/D_${imgPng[0]}-O.jp`
-                    this.attribute = element.attribute_combinations[2].value_name
+                    let attribute02 = element.attribute_combinations[2].value_name;
+                    this.attribute = attribute02;
                 })
-                return
-            }).catch(err => console.log(err));
+            }).catch(err => {
+                err
+            });
 
         },
+        limpaForm() {
+            console.log(this.id)
+        }
     }
 }
 
 </script>
 <style scoped>
-.transi {
-    transition: 5s;
-    animation: 5s;
+.ul-btn {
+    cursor: pointer;
 }
 
-.invalid {
-    visibility: hidden;
+.chart01 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-left: 10%;
+    background: #ffffffcd;
 }
 
 .search-box {
