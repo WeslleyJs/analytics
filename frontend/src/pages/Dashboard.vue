@@ -25,7 +25,8 @@
                     <img :src="imgPng">
                 </div>
                 <ul class="mx-auto card-group w800">
-                    <li class="card-body myBox backgroundEffect" v-for="item in mlb.variations" :key="item.id">
+                    <li data-aos="flip-right" data-aos-delay="300" class="card-body myBox backgroundEffect" v-for="item in mlb.variations"
+                        :key="item.id">
                         <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
                         <p v-if='rootAttribute && rootAttribute.prop'><b>Atributos 02: {{
                                 item.attribute_combinations[2].value_name
@@ -39,9 +40,6 @@
     </div>
     <div class="chart01" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
         <canvas class="chart01" id="myChart"></canvas>
-    </div>
-    <div class="chart01" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
-        <canvas class="chart01" id="myChartPizza"></canvas>
     </div>
     <div>
 
@@ -60,34 +58,10 @@ export default {
             id: '',
             mlb: '',
             imgPng: '',
-            attribute: '',
             rootAttribute: undefined
         }
     },
     async mounted() {
-        const datas02 = {
-            labels: [
-                'Red',
-                'Blue',
-                'Yellow'
-            ],
-            datasets: [{
-                label: 'My First Dataset',
-                data: [300, 50, 100],
-                backgroundColor: [
-                    'rgb(255, 99, 132)',
-                    'rgb(54, 162, 235)',
-                    'rgb(255, 205, 86)'
-                ],
-                hoverOffset: 4
-            }]
-        }
-
-        const config02 = {
-            type: 'doughnut',
-            data: datas02,
-        };
-
 
         const datas = {
             labels: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho'],
@@ -131,33 +105,27 @@ export default {
         const myChart = await new Chart(ctx, config);
         myChart
 
-        const ctx02 = document.getElementById('myCharPizza');
-        const myChart02 = new Chart(ctx02, config02);
-        myChart02;
-
     },
     methods: {
-        async search() {
+        search() {
 
-            await axios.get(`http://localhost:3000/itens/analytics/${this.id}`).then(res => {
+         axios.get(`http://localhost:3000/itens/analytics/${this.id}`).then(res => {
                 const data = res.data;
 
                 this.mlb = data;
                 const attributes = data.variations;
                 attributes.forEach(element => {
+                    element
                     const imgPng = element.picture_ids;
                     this.imgPng = `http://http2.mlstatic.com/D_${imgPng[0]}-O.jp`
                     let attribute02 = element.attribute_combinations[2].value_name;
                     this.attribute = attribute02;
                 })
             }).catch(err => {
-                err
+                console.log(err)
             });
 
         },
-        limpaForm() {
-            console.log(this.id)
-        }
     }
 }
 
@@ -271,6 +239,7 @@ li {
 }
 
 .myBox {
+    display: inline-block;
     /* width: 280px;
     height: 520px; */
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
@@ -281,6 +250,7 @@ li {
     z-index: 10;
     border: solid 1px;
     max-width: 30%;
+    width: 30%;
     margin: 2px;
     margin-top: 2%;
     border-radius: 5px;
