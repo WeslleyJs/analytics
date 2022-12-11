@@ -1,40 +1,47 @@
 <template>
     <nav>
         <ul>
-            <li class="ul-btn" @click="clk = !clk">
+            <li id="options" class="ul-btn" @click="clk = !clk">
                 <h4><b>{{ clk ? 'Results' : 'DashBoards' }}</b></h4>
             </li>
         </ul>
+        <label for="options" @click="clk = !clk">{{ clk ? 'Dashboard' : 'Results' }}</label>
     </nav>
     <div class="transi search-box bg-gradient">
-        <input type="text" class="search-text" v-model="id" placeholder="MLB">
+        <input @keyup.enter="search" type="text" class="search-text" v-model="id" placeholder="MLB">
         <button class="btn search-button btn-success" @click="search">
             <img src="../assets/img/icons8-pesquisar-480.svg" height="35" width="35">
         </button>
     </div>
     <div v-if="clk">
         <div>
-            <p>ID de Teste: <b>MLB1830777149</b></p>
-            <p>ID de Teste: <b>MLB2832356661</b></p>
-            <div v-if="mlb" class="card borderT">
-                <div class="card-body">
-                    <h6><b>Título: {{ mlb.title }}</b></h6>
-                    <p><b>Data de Cadastro: {{ mlb.date_created }}</b></p>
-                    <p><b>Estoque: {{ mlb.available_quantity }}</b></p>
-                    <p><b>{{ mlb.sold_quantity }} Vendidos</b></p>
-                    <img :src="imgPng">
+            <br>
+            <hr>
+            <div v-if="!errors">
+                <div v-if="mlb" class="card borderT">
+                    <div class="card-body max-li myText">
+                        <nav class="imgPng">
+                            <img :src="imgPng">
+                        </nav>
+                        <h6><b>Título: {{ mlb.title }}</b></h6>
+                        <p><b>Data de Cadastro: {{ date }}</b></p>
+                        <p><b>Estoque: {{ mlb.available_quantity }}</b></p>
+                        <p><b>{{ mlb.sold_quantity }} Vendidos</b></p>
+                        <p v-if="shipp"><b>Valor Frete Pago Pelo Seller: R${{ shipp }}</b></p>
+                        <p v-if="shipp"><b>Peso de Cadastro: {{ kg }}g</b></p>
+                    </div>
+                    <ul class="mx-auto card-group w800">
+                        <li data-aos="flip-right" data-aos-delay="300" class="card-body myBox backgroundEffect"
+                            v-for="item in mlb.variations" :key="item.id">
+                            <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
+                            <p v-if='rootAttribute && rootAttribute.prop'><b>Atributos 02: {{
+                                    item.attribute_combinations[2].value_name
+                            }}</b></p>
+                            <p><b>Estoque: {{ item.available_quantity }}</b></p>
+                            <p><b>Vendidos: {{ item.sold_quantity }}</b></p>
+                        </li>
+                    </ul>
                 </div>
-                <ul class="mx-auto card-group w800">
-                    <li data-aos="flip-right" data-aos-delay="300" class="card-body myBox backgroundEffect" v-for="item in mlb.variations"
-                        :key="item.id">
-                        <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
-                        <p v-if='rootAttribute && rootAttribute.prop'><b>Atributos 02: {{
-                                item.attribute_combinations[2].value_name
-                        }}</b></p>
-                        <p><b>Estoque: {{ item.available_quantity }}</b></p>
-                        <p><b>Vendidos: {{ item.sold_quantity }}</b></p>
-                    </li>
-                </ul>
             </div>
         </div>
     </div>
@@ -58,7 +65,11 @@ export default {
             id: '',
             mlb: '',
             imgPng: '',
-            rootAttribute: undefined
+            date: '',
+            shipp: '',
+            kg: '',
+            rootAttribute: undefined,
+            errors: ''
         }
     },
     async mounted() {
@@ -107,12 +118,14 @@ export default {
 
     },
     methods: {
-        search() {
-
-         axios.get(`http://localhost:3000/itens/analytics/${this.id}`).then(res => {
+        async search() {
+            await axios.get(`http://localhost:3000/itens/analytics/${this.id}`).then(res => {
                 const data = res.data;
-
                 this.mlb = data;
+
+                const date = data.date_created;
+                this.date = date.slice(0, 10).split('-').reverse().join('/');
+
                 const attributes = data.variations;
                 attributes.forEach(element => {
                     element
@@ -122,17 +135,52 @@ export default {
                     this.attribute = attribute02;
                 })
             }).catch(err => {
-                console.log(err)
+                this.errors = err.status;
             });
+            this.shipping()
 
         },
+        async shipping() {
+            await axios.get(`http://localhost:3000/itens/shipping/${this.id}`).then(res => {
+                const data = res.data
+                this.shipp = data.list_cost;
+                this.kg = data.billable_weight;
+
+                console.log(this.kg, this.shipp)
+            }).catch(err => console.log(err));
+        }
     }
 }
 
 </script>
 <style scoped>
+.max-li {
+    display: inline-block;
+    justify-content: center;
+    width: 800px;
+}
+
 .ul-btn {
     cursor: pointer;
+}
+
+.myText {
+    /* display: flex; */
+    text-align: start;
+    background-color: red;
+    max-width: 50%;
+    width: 100%;
+    border: solid 0, 5px;
+    border-radius: 5px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    background: #fff;
+    transition: all 0.5s ease;
+
+}
+
+.imgPng {
+    text-align: center;
+
 }
 
 .chart01 {
@@ -212,6 +260,8 @@ li {
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
 
 .w800 {
+    display: flex;
+    justify-content: center;
     max-width: 800px;
 }
 
@@ -225,6 +275,7 @@ li {
     display: flex;
     justify-content: center;
     align-items: center;
+
 }
 
 .dashboard {
@@ -248,7 +299,7 @@ li {
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    border: solid 1px;
+    border: solid 0, 5px;
     max-width: 30%;
     width: 30%;
     margin: 2px;
