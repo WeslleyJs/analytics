@@ -14,7 +14,7 @@ module.exports = class Analyzes {
             res.json(data).end();
         }).catch((err) => {
             const error = err.message
-            res.redirect('/')
+            res.status(404).json({message: error});
         });
     }
     static async shipping(req, res) {
@@ -28,6 +28,9 @@ module.exports = class Analyzes {
                const result = data[key].coverage.all_country
                 res.json(result);
             })
-        }).catch(err => console.log(err));
+        }).catch((err) => {
+            const error = err.message;
+            res.status(404).json({message: error});
+        });
     }
 }
