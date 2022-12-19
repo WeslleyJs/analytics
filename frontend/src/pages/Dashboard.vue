@@ -9,41 +9,56 @@
     </nav>
     <div class="transi search-box bg-gradient">
         <input @keyup.enter="search" type="text" class="search-text" v-model="id" placeholder="MLB">
-        <button class="btn search-button btn-success" @click="search">
+        <button type="submit" class="btn search-button btn-success" @click="search">
             <img src="../assets/img/icons8-pesquisar-480.svg" height="35" width="35">
         </button>
     </div>
+    <p>MLB1830777149</p>
+    <p>2742122115</p>
     <div v-if="clk">
-        <div>
-            <br>
-            <hr>
-            <div v-if="!errors">
-                <div v-if="mlb" class="card borderT">
-                    <div class="card-body max-li myText">
-                        <nav class="imgPng">
-                            <img :src="imgPng">
-                        </nav>
-                        <h6><b>Título: {{ mlb.title }}</b></h6>
-                        <p><b>Data de Cadastro: {{ date }}</b></p>
-                        <p><b>Estoque: {{ mlb.available_quantity }}</b></p>
-                        <p><b>{{ mlb.sold_quantity }} Vendidos</b></p>
-                        <p v-if="shipp"><b>Valor Frete Pago Pelo Seller: R${{ shipp }}</b></p>
-                        <p v-if="shipp"><b>Peso de Cadastro: {{ kg }}g</b></p>
+        <br>
+        <br>
+        <section v-if="errors">
+            <div v-if="errors" 
+            class="alert alert-danger card-group notfound" 
+            data-aos="flip-right" data-aos-delay="150"
+            role="alert">
+                MLB Invalido ou não existente
+            </div>
+        </section>
+        <section v-else>
+            <div>
+                <br>
+                <div>
+                    <div v-if="mlb" class="card borderT">
+                        <div class="card-body max-li myText">
+                            <nav class="imgPng">
+                                <img :src="imgPng">
+                            </nav>
+                            <h6><b>Título: {{ mlb.title }}</b></h6>
+                            <p v-if="date"><b>Data de Cadastro: {{ date }}</b></p>
+                            <p><b>Estoque: {{ mlb.available_quantity }}</b></p>
+                            <p><b>{{ mlb.sold_quantity }} Vendidos</b></p>
+                            <p v-if="shipp"><b>Valor Frete Pago Pelo Seller: R${{ shipp }}</b></p>
+                            <p v-if="shipp"><b>Peso de Cadastro: {{ kg }}g</b></p>
+                            <p v-else><b>Envios <span style="font-size:20px; color: green;">FULL</span></b></p>
+                        </div>
+                        <ul class="mx-auto card-group w800">
+                            <li data-aos="flip-right" data-aos-delay="300" class="card-body myBox backgroundEffect"
+                                v-for="item in mlb.variations" :key="item.id">
+                                <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
+                                <p v-if='attribute02'><b>Atributos 02: {{
+                                        item.attribute_combinations[2].value_name
+                                }}</b></p>
+                                <p v-else></p>
+                                <p><b>Estoque: {{ item.available_quantity }}</b></p>
+                                <p><b>Vendidos: {{ item.sold_quantity }}</b></p>
+                            </li>
+                        </ul>
                     </div>
-                    <ul class="mx-auto card-group w800">
-                        <li data-aos="flip-right" data-aos-delay="300" class="card-body myBox backgroundEffect"
-                            v-for="item in mlb.variations" :key="item.id">
-                            <p><b>Atributos: {{ item.attribute_combinations[0].value_name }}</b></p>
-                            <p v-if='rootAttribute && rootAttribute.prop'><b>Atributos 02: {{
-                                    item.attribute_combinations[2].value_name
-                            }}</b></p>
-                            <p><b>Estoque: {{ item.available_quantity }}</b></p>
-                            <p><b>Vendidos: {{ item.sold_quantity }}</b></p>
-                        </li>
-                    </ul>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
     <div class="chart01" v-show="!clk" style="height:50vh; width: 80vw; margin-top: 20px;">
         <canvas class="chart01" id="myChart"></canvas>
@@ -65,11 +80,12 @@ export default {
             id: '',
             mlb: '',
             imgPng: '',
-            date: '',
+            date: undefined,
             shipp: '',
             kg: '',
-            rootAttribute: undefined,
-            errors: ''
+            attribute02: '',
+            loading: '',
+            errors: false,
         }
     },
     async mounted() {
@@ -119,10 +135,11 @@ export default {
     },
     methods: {
         async search() {
+
             await axios.get(`http://localhost:3000/itens/analytics/${this.id}`).then(res => {
+
                 const data = res.data;
                 this.mlb = data;
-
                 const date = data.date_created;
                 this.date = date.slice(0, 10).split('-').reverse().join('/');
 
@@ -131,29 +148,42 @@ export default {
                     element
                     const imgPng = element.picture_ids;
                     this.imgPng = `http://http2.mlstatic.com/D_${imgPng[0]}-O.jp`
-                    let attribute02 = element.attribute_combinations[2].value_name;
-                    this.attribute = attribute02;
-                })
-            }).catch(err => {
-                this.errors = err.status;
-            });
-            this.shipping()
+                    const attr = element.attribute_combinations[2];
+                    this.attribute02 = attr;
+                    console.log(attr);
 
+                })
+            }).catch((error) => {
+                console.log('erro aqui', error.message)
+                const notFound = error.message;
+                this.errors = notFound;
+                setTimeout(() => document.location.reload(true), 1300);
+
+            });
+            this.shipping();
         },
         async shipping() {
             await axios.get(`http://localhost:3000/itens/shipping/${this.id}`).then(res => {
+
                 const data = res.data
                 this.shipp = data.list_cost;
                 this.kg = data.billable_weight;
 
-                console.log(this.kg, this.shipp)
-            }).catch(err => console.log(err));
+            }).catch(err => {
+                this.errors = err.message;
+            });
+
         }
     }
 }
 
 </script>
 <style scoped>
+
+.notfound{
+    max-width: 30%;
+    width: 30%;
+}
 .max-li {
     display: inline-block;
     justify-content: center;
